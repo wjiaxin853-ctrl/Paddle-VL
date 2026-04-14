@@ -1,9 +1,11 @@
-from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
-from qwen_vl_utils import process_vision_info
+from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
+import torch  # 添加这一行
+
+from PIL import Image
 
 # 默认：将模型加载到可用设备上
 model = Qwen2VLForConditionalGeneration.from_pretrained(
-    "prithivMLmods/Qwen2-VL-OCR-2B-Instruct", torch_dtype="auto", device_map="auto"
+    "/Users/wjx/Documents/wjx/Paddle-VL/models/Qwen2-VL-OCR-2B-Instruct", torch_dtype="auto", local_files_only=True
 )
 
 # 建议启用 flash_attention_2，以获得更好的加速效果和更低的显存占用，
@@ -16,7 +18,8 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
 # )
 
 # 默认处理器
-processor = AutoProcessor.from_pretrained("prithivMLmods/Qwen2-VL-OCR-2B-Instruct")
+processor = AutoProcessor.from_pretrained("/Users/wjx/Documents/wjx/Paddle-VL/models/Qwen2-VL-OCR-2B-Instruct",
+                                          local_files_only=True)
 
 # 模型默认每张图像的视觉 token 数范围是 4-16384。
 # 你可以根据需要设置 min_pixels 和 max_pixels，
@@ -25,14 +28,14 @@ processor = AutoProcessor.from_pretrained("prithivMLmods/Qwen2-VL-OCR-2B-Instruc
 # max_pixels = 1280*28*28
 # processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", min_pixels=min_pixels, max_pixels=max_pixels)
 
+image_path = "/Users/wjx/Documents/wjx/Paddle-VL/demo/images/手持身份证.jpg"
+image = Image.open(image_path).convert("RGB")
+
 messages = [
     {
         "role": "user",
         "content": [
-            {
-                "type": "image",
-                "image": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg",
-            },
+            {"type": "image", "image": image},  # ✅ PIL Image 对象
             {"type": "text", "text": "请描述这张图片。"},
         ],
     }
@@ -42,15 +45,24 @@ messages = [
 text = processor.apply_chat_template(
     messages, tokenize=False, add_generation_prompt=True
 )
-image_inputs, video_inputs = process_vision_info(messages)
+
 inputs = processor(
     text=[text],
-    images=image_inputs,
-    videos=video_inputs,
+    images=[image],  # 直接传入 PIL Image 对象
     padding=True,
     return_tensors="pt",
 )
-inputs = inputs.to("cuda")
+
+
+if torch.backends.mps.is_available():
+    device = "mps"
+elif torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
+
+inputs = inputs.to(device)
+model = model.to(device)
 
 # ========== 流式输出部分 ==========
 from transformers import TextIteratorStreamer
@@ -61,7 +73,7 @@ streamer = TextIteratorStreamer(processor, skip_prompt=True, skip_special_tokens
 
 # 准备生成参数
 generation_kwargs = dict(
-    inputs=inputs,
+    **inputs,  # 改这里：使用 ** 解包
     max_new_tokens=128,
     streamer=streamer,
     do_sample=False,
