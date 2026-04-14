@@ -5,7 +5,7 @@ from PIL import Image
 
 # 默认：将模型加载到可用设备上
 model = Qwen2VLForConditionalGeneration.from_pretrained(
-    "/Users/wjx/Documents/wjx/Paddle-VL/models/Qwen2-VL-OCR-2B-Instruct", torch_dtype="auto", local_files_only=True
+    "/models/Qwen2-VL-OCR-2B-Instruct", torch_dtype="auto", local_files_only=True
 )
 
 # 建议启用 flash_attention_2，以获得更好的加速效果和更低的显存占用，
@@ -18,7 +18,7 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
 # )
 
 # 默认处理器
-processor = AutoProcessor.from_pretrained("/Users/wjx/Documents/wjx/Paddle-VL/models/Qwen2-VL-OCR-2B-Instruct",
+processor = AutoProcessor.from_pretrained("/models/Qwen2-VL-OCR-2B-Instruct",
                                           local_files_only=True)
 
 # 模型默认每张图像的视觉 token 数范围是 4-16384。
@@ -36,7 +36,7 @@ messages = [
         "role": "user",
         "content": [
             {"type": "image", "image": image},  # ✅ PIL Image 对象
-            {"type": "text", "text": "请描述这张图片。"},
+            {"type": "text", "text": "请按照以下格式输出：【图片描述】：描述这张图片的内容【图片文字】：提取图片中所有可见的文字。不可以捏造不存在的文字信息。"},
         ],
     }
 ]
