@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 # 放在最前面，跳过网络检查
 os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
@@ -6,6 +7,10 @@ os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 from paddleocr import PaddleOCRVL
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+INPUT_IMAGE = ROOT_DIR / "demo/19ce1e526082605f7f6b8a34f3090046.pdf"
+OUTPUT_DIR = ROOT_DIR / "output/Paddle-VL/19ce1e526082605f7f6b8a34f3090046"
 
 # 初始化时关闭版面检测，避免加载 PP-DocLayoutV2 模型（节省内存）
 pipeline = PaddleOCRVL(
@@ -17,8 +22,8 @@ pipeline = PaddleOCRVL(
 # pipeline = PaddleOCRVL(use_doc_orientation_classify=True) # 通过 use_doc_orientation_classify 指定是否使用文档方向分类模型
 # pipeline = PaddleOCRVL(use_doc_unwarping=True) # 通过 use_doc_unwarping 指定是否使用文本图像矫正模块
 # pipeline = PaddleOCRVL(use_layout_detection=False) # 通过 use_layout_detection 指定是否使用版面区域检测排序模块
-output = pipeline.predict("./手持身份证.jpg")
+output = pipeline.predict(str(INPUT_IMAGE))
 for res in output:
     res.print() ## 打印预测的结构化输出
-    res.save_to_json(save_path="output") ## 保存当前图像的结构化json结果
-    res.save_to_markdown(save_path="output") ## 保存当前图像的markdown格式的结果
+    res.save_to_json(save_path=str(OUTPUT_DIR)) ## 保存当前图像的结构化json结果
+    res.save_to_markdown(save_path=str(OUTPUT_DIR)) ## 保存当前图像的markdown格式的结果
