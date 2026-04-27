@@ -31,7 +31,7 @@ if hasattr(model, "cuda"):
 
 
 # prompt = "<image>\nFree OCR. "
-prompt = "<image>\n<|grounding|>Convert the document to markdown. "
+prompt = "<image>\n请描述这张图片中可见的主体内容。"
 
 res = model.infer(
     tokenizer,
