@@ -30,8 +30,8 @@ if hasattr(model, "cuda"):
     model.cuda = types.MethodType(to_device, model)
 
 
-# prompt = "<image>\nFree OCR. "
-prompt = "<image>\n<|grounding|>Convert the document to markdown. "
+prompt = "<image>\nFree OCR. "
+# prompt = "<image>\n<|grounding|>Convert the document to markdown. "
 
 res = model.infer(
     tokenizer,
@@ -45,4 +45,5 @@ res = model.infer(
 )
 
 print("\n识别结果已保存至:", output_path)
+print("\nOCR结果：")
 print(res)
