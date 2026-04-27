@@ -1,19 +1,21 @@
 import torch
-from transformers import AutoModelForCausalLM, AutoProcessor, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoProcessor
 from qwen_vl_utils import process_vision_info
-from dots_ocr.utils import dict_promptmode_to_prompt
+import os
 
-model_path = "./weights/DotsOCR"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+model_path = "/workspace/models/dots_ocr"
 model = AutoModelForCausalLM.from_pretrained(
     model_path,
-    attn_implementation="flash_attention_2",
     torch_dtype=torch.bfloat16,
     device_map="auto",
     trust_remote_code=True
 )
 processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
 
-image_path = "demo/demo_image1.jpg"
+image_path = "/workspace/demo/images/手持身份证.jpg"
+
 prompt = """Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.
 
 1. Bbox format: [x1, y1, x2, y2]
@@ -32,6 +34,25 @@ prompt = """Please output the layout information from the PDF image, including e
 
 5. Final Output: The entire output must be a single JSON object.
 """
+# 版面解析提示词说明：
+# 1. 要求模型输出整张文档图像中的版面信息
+# 2. 每个版面元素都要包含：
+#    - bbox：边界框坐标 [x1, y1, x2, y2]
+#    - category：版面类别
+#    - text：该区域中的文字内容
+# 3. 支持的版面类别包括：
+#    Caption（图注）、Footnote（脚注）、Formula（公式）、List-item（列表项）、
+#    Page-footer（页脚）、Page-header（页眉）、Picture（图片）、
+#    Section-header（章节标题）、Table（表格）、Text（正文）、Title（标题）
+# 4. 文本格式要求：
+#    - Picture 类别不需要 text 字段
+#    - Formula 的 text 要用 LaTeX 格式
+#    - Table 的 text 要用 HTML 格式
+#    - 其他类别的 text 用 Markdown 格式
+# 5. 额外约束：
+#    - 输出文字必须是图片原文，不能翻译
+#    - 所有版面元素必须按人类阅读顺序排序
+# 6. 最终输出必须是单个 JSON 对象
 
 messages = [
         {
@@ -62,6 +83,7 @@ inputs = processor(
 )
 
 inputs = inputs.to("cuda")
+inputs.pop("mm_token_type_ids", None)
 
 # Inference: Generation of the output
 generated_ids = model.generate(**inputs, max_new_tokens=24000)
@@ -71,4 +93,18 @@ generated_ids_trimmed = [
 output_text = processor.batch_decode(
     generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
 )
-print(output_text)
+
+output_dir = "/workspace/output/dots_ocr"
+os.makedirs(output_dir, exist_ok=True)
+
+
+
+result = output_text[0] if isinstance(output_text, list) else str(output_text)
+image_name = os.path.splitext(os.path.basename(image_path))[0]
+output_file = f"{output_dir}/{image_name}.json"
+
+with open(output_file, "w", encoding="utf-8") as f:
+    f.write(result)
+
+print(result)
+print(f"\n识别结果已保存至: {output_file}")
