@@ -91,7 +91,7 @@ model = AutoModel.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
 
 # Load and process image
-IMAGE_PATH = "/workspace/demo/images/手持身份证.jpg"
+IMAGE_PATH = "/workspace/demo/images/取钱+有文字.jpg"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 pixel_values = load_image(IMAGE_PATH).to(torch.bfloat16).to(device)
 
@@ -102,6 +102,7 @@ output_file = f"{output_dir}/{image_name}.txt"
 
 # Inference
 prompt = "<image>请识别图中所有文字"
+# prompt = "<image>请描述这张图片"
 with torch.no_grad():
     response = model.chat(
         tokenizer,

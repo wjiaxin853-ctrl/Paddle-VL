@@ -5,7 +5,7 @@ from PIL import Image
 
 # 默认：将模型加载到可用设备上
 model = Qwen2VLForConditionalGeneration.from_pretrained(
-    "/models/Qwen2-VL-OCR-2B-Instruct", torch_dtype="auto", local_files_only=True
+    "/Users/wjx/Documents/wjx/Paddle-VL/models/Qwen2-VL-OCR-2B-Instruct", torch_dtype="auto", local_files_only=True
 )
 
 # 建议启用 flash_attention_2，以获得更好的加速效果和更低的显存占用，
@@ -18,7 +18,7 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
 # )
 
 # 默认处理器
-processor = AutoProcessor.from_pretrained("/models/Qwen2-VL-OCR-2B-Instruct",
+processor = AutoProcessor.from_pretrained("/Users/wjx/Documents/wjx/Paddle-VL/models/Qwen2-VL-OCR-2B-Instruct",
                                           local_files_only=True)
 
 # 模型默认每张图像的视觉 token 数范围是 4-16384。
@@ -28,7 +28,7 @@ processor = AutoProcessor.from_pretrained("/models/Qwen2-VL-OCR-2B-Instruct",
 # max_pixels = 1280*28*28
 # processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-2B-Instruct", min_pixels=min_pixels, max_pixels=max_pixels)
 
-image_path = "/Users/wjx/Documents/wjx/Paddle-VL/demo/images/手持身份证.jpg"
+image_path = "/Users/wjx/Documents/wjx/Paddle-VL/demo/images/取钱+有文字.jpg"
 image = Image.open(image_path).convert("RGB")
 
 messages = [

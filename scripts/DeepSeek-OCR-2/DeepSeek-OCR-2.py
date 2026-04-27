@@ -5,7 +5,7 @@ import types
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 model_name = "/workspace/models/DeepSeek-OCR-2"
-image_file = "/workspace/demo/images/取钱+有文字.jpg"
+image_file = "/workspace/demo/images/双人手持身份证.jpg"
 output_path = "/workspace/output/DeepSeek-OCR-2"
 
 os.makedirs(output_path, exist_ok=True)

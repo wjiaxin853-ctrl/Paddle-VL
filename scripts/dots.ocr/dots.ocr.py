@@ -2,6 +2,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoProcessor
 from qwen_vl_utils import process_vision_info
 import os
+import json
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -14,7 +15,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
 
-image_path = "/workspace/demo/images/手持身份证.jpg"
+image_path = "/workspace/demo/images/取钱+有文字.jpg"
 
 prompt = """Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.
 
@@ -100,11 +101,19 @@ os.makedirs(output_dir, exist_ok=True)
 
 
 result = output_text[0] if isinstance(output_text, list) else str(output_text)
+data = json.loads(result)
+texts = [item["text"] for item in data if "text" in item]
+ocr_text = "\n".join(texts)
+print(ocr_text)
+
 image_name = os.path.splitext(os.path.basename(image_path))[0]
 output_file = f"{output_dir}/{image_name}.json"
 
 with open(output_file, "w", encoding="utf-8") as f:
     f.write(result)
 
-print(result)
+text_output_file = f"{output_dir}/{image_name}.txt"
+with open(text_output_file, "w", encoding="utf-8") as f:
+    f.write(ocr_text)
+
 print(f"\n识别结果已保存至: {output_file}")
